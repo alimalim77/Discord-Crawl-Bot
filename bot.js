@@ -10,6 +10,7 @@ const dotenv = require("dotenv");
 const parser = require("./parsing-csv");
 
 dotenv.config();
+const verifiedUsers = new Set();
 
 const startBot = async () => {
   try {
@@ -24,12 +25,31 @@ const startBot = async () => {
       });
     });
 
-    client.on("messageCreate", (msg) => {
-      console.log("Received Data is", data);
+    client.on("messageCreate", async (msg) => {
       if (msg.author.bot) return;
-      data.some((data) => msg.content === data.Email)
-        ? msg.channel.send("User is Verified ✔️😀")
-        : msg.channel.send("You are not one among the beavers😞");
+      console.log(msg.guild.members);
+      if (verifiedUsers.has(msg.author.id)) {
+        msg.channel.send("You are already verified.");
+        return;
+      }
+
+      const userEmail = data.find((entry) => entry.Email === msg.content);
+      if (userEmail) {
+        msg.channel.send("User is Verified ✔️😀");
+        verifiedUsers.add(msg.author.id);
+      } else {
+        if (msg.content.includes("@")) {
+          msg.channel.send("You are not verified in server😞");
+        }
+        try {
+          await msg.guild.members.ban(msg.author.id, {
+            reason: "Unverified email provided",
+          });
+          console.log(`Banned ${msg.author.tag} for unverified email`);
+        } catch (error) {
+          console.error(`Failed to ban ${msg.author.tag}:`, error);
+        }
+      }
     });
     client.login(process.env.TOKEN);
   } catch (err) {
