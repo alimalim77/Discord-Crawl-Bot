@@ -7,22 +7,27 @@ const client = new Client({
   ],
 });
 const dotenv = require("dotenv");
-const parser = require("./parsing-csv");
+const mongoose = require("mongoose");
+
+// Model created instead client.db ad client .collection could be used
+const User = require("./model/user.model.js");
 
 dotenv.config();
-const verifiedUsers = new Set();
 
 const startBot = async () => {
   try {
-    const data = await parser();
+    const res = await User.find({});
 
+    //  On starting up, the event is fired
     client.once("ready", () => {
       console.log(`Logged in as ${client.user.tag}`);
-      client.channels.cache.forEach((channel) => {
-        if (channel.name === "general") {
-          channel.send("Please provide your email");
-        }
-      });
+      console.log(`Data is ${res}`);
+    });
+
+    // When a member enters the server, it is triggered immediately
+    client.on("guildMemberAdd", async (member) => {
+      const username = `${member.user.username}`;
+      console.log(`User: ${username}`);
     });
 
     // client.on("messageCreate", async (msg) => {
@@ -58,4 +63,10 @@ const startBot = async () => {
   }
 };
 
-startBot();
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("Connected TO MONGODB");
+    startBot();
+  })
+  .catch((err) => console.error("Error occurred:", err));
