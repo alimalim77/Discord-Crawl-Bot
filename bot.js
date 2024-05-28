@@ -4,37 +4,74 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers,
   ],
 });
 const dotenv = require("dotenv");
-const parser = require("./parsing-csv");
+const mongoose = require("mongoose");
+
+// Model created instead client.db ad client .collection could be used
+const User = require("./model/user.model.js");
 
 dotenv.config();
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("Connected TO MONGODB");
+    startBot();
+  })
+  .catch((err) => console.error("Error occurred:", err));
 
 const startBot = async () => {
   try {
-    const data = await parser();
+    const res = await User.find({});
 
+    //  On starting up, the event is fired
     client.once("ready", () => {
       console.log(`Logged in as ${client.user.tag}`);
-      client.channels.cache.forEach((channel) => {
-        if (channel.name === "general") {
-          channel.send("Please provide your email");
-        }
+      client.guilds.cache.forEach((guild) => {
+        console.log(`Guild: ${guild.name}`);
+        guild.roles.cache.forEach((role) => {
+          console.log(`- Role: ${role.name} (ID: ${role.id})`);
+        });
       });
     });
 
-    client.on("messageCreate", (msg) => {
-      console.log("Received Data is", data);
-      if (msg.author.bot) return;
-      data.some((data) => msg.content === data.Email)
-        ? msg.channel.send("User is Verified ✔️😀")
-        : msg.channel.send("You are not one among the beavers😞");
+    // When a member enters the server, it is triggered immediately
+    client.on("guildMemberAdd", async (member) => {
+      const username = `${member.user.username}`;
+      console.log(`User: ${username}`);
     });
+
+    // client.on("messageCreate", async (msg) => {
+    //   if (msg.author.bot) return;
+    //   console.log(msg.guild.members);
+    //   if (verifiedUsers.has(msg.author.id)) {
+    //     msg.channel.send("You are already verified.");
+    //     return;
+    //   }
+
+    //   const userEmail = data.find((entry) => entry.Email === msg.content);
+    //   if (userEmail) {
+    //     msg.channel.send("User is Verified ✔️😀");
+    //     verifiedUsers.add(msg.author.id);
+    //   } else {
+    //     if (msg.content.includes("@")) {
+    //       msg.channel.send("You are not verified in server😞");
+    //     }
+    //     try {
+    //       await msg.guild.members.ban(msg.author.id, {
+    //         reason: "Unverified email provided",
+    //       });
+    //       console.log(`Banned ${msg.author.tag} for unverified email`);
+    //     } catch (error) {
+    //       console.error(`Failed to ban ${msg.author.tag}:`, error);
+    //     }
+    //   }
+    // });
+
     client.login(process.env.TOKEN);
   } catch (err) {
     console.error("Error occurred:", err);
   }
 };
-
-startBot();
