@@ -22,6 +22,22 @@ mongoose
   })
   .catch((err) => console.error("Error occurred:", err));
 
+// Initially create a role and assign
+// As a follow-up, store roles in DB, fetch and assign them matching username
+const roleCreation = async (guild) => {
+  console.log("Role Creation");
+  const newRole = guild.roles.cache.find((role) => role.name === "MERN-2");
+  if (!newRole) {
+    const newRole = await guild.roles.create({
+      name: "MERN-2",
+      color: 2067276,
+      permissions: [],
+    });
+    return newRole;
+  }
+  return newRole;
+};
+
 const startBot = async () => {
   try {
     const res = await User.find({});
@@ -29,18 +45,20 @@ const startBot = async () => {
     //  On starting up, the event is fired
     client.once("ready", () => {
       console.log(`Logged in as ${client.user.tag}`);
-      client.guilds.cache.forEach((guild) => {
-        console.log(`Guild: ${guild.name}`);
-        guild.roles.cache.forEach((role) => {
-          console.log(`- Role: ${role.name} (ID: ${role.id})`);
-        });
-      });
+      // client.guilds.cache.forEach((guild) => {
+      //   console.log(`Guild: ${guild.name}`);
+      //   guild.roles.cache.forEach((role) => {
+      //     console.log(`- Role: ${role.name} (ID: ${role.id})`);
+      //   });
+      // });
     });
 
     // When a member enters the server, it is triggered immediately
     client.on("guildMemberAdd", async (member) => {
       const username = `${member.user.username}`;
-      console.log(`User: ${username}`);
+      const role = await roleCreation(member.guild);
+      await member.roles.add(role);
+      console.log(`Assigned 'MERN-2' role to ${username}`);
     });
 
     // client.on("messageCreate", async (msg) => {
