@@ -14,6 +14,13 @@ const mongoose = require("mongoose");
 const User = require("./model/user.model.js");
 
 dotenv.config();
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("Connected TO MONGODB");
+    startBot();
+  })
+  .catch((err) => console.error("Error occurred:", err));
 
 const startBot = async () => {
   try {
@@ -22,7 +29,12 @@ const startBot = async () => {
     //  On starting up, the event is fired
     client.once("ready", () => {
       console.log(`Logged in as ${client.user.tag}`);
-      console.log(`Data is ${res}`);
+      client.guilds.cache.forEach((guild) => {
+        console.log(`Guild: ${guild.name}`);
+        guild.roles.cache.forEach((role) => {
+          console.log(`- Role: ${role.name} (ID: ${role.id})`);
+        });
+      });
     });
 
     // When a member enters the server, it is triggered immediately
@@ -63,11 +75,3 @@ const startBot = async () => {
     console.error("Error occurred:", err);
   }
 };
-
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("Connected TO MONGODB");
-    startBot();
-  })
-  .catch((err) => console.error("Error occurred:", err));
