@@ -38,6 +38,16 @@ const roleCreation = async (guild) => {
   return newRole;
 };
 
+// Preapproving if they are already present in the DB
+const preApproveUser = async (user) => {
+  const result = await User.findOne({ username: user.username });
+  if (!result) return null;
+  return {
+    username: result.username,
+    roles: result.roles,
+  };
+};
+
 const startBot = async () => {
   try {
     const res = await User.find({});
@@ -45,20 +55,17 @@ const startBot = async () => {
     //  On starting up, the event is fired
     client.once("ready", () => {
       console.log(`Logged in as ${client.user.tag}`);
-      // client.guilds.cache.forEach((guild) => {
-      //   console.log(`Guild: ${guild.name}`);
-      //   guild.roles.cache.forEach((role) => {
-      //     console.log(`- Role: ${role.name} (ID: ${role.id})`);
-      //   });
-      // });
     });
 
     // When a member enters the server, it is triggered immediately
     client.on("guildMemberAdd", async (member) => {
       const username = `${member.user.username}`;
-      const role = await roleCreation(member.guild);
-      await member.roles.add(role);
-      console.log(`Assigned 'MERN-2' role to ${username}`);
+      const verified = await preApproveUser(username);
+      if (verified) {
+        const role = await roleCreation(member.guild);
+        await member.roles.add(role);
+        console.log(`Assigned 'MERN-2' role to ${username}`);
+      }
     });
 
     // client.on("messageCreate", async (msg) => {
