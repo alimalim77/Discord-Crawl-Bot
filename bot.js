@@ -24,24 +24,30 @@ mongoose
 
 // Initially create a role and assign
 // As a follow-up, store roles in DB, fetch and assign them matching username
-const roleCreation = async (guild) => {
-  console.log("Role Creation");
-  const newRole = guild.roles.cache.find((role) => role.name === "MERN-2");
-  if (!newRole) {
-    const newRole = await guild.roles.create({
-      name: "MERN-2",
-      color: 2067276,
-      permissions: [],
-    });
-    return newRole;
-  }
-  return newRole;
+const roleCreation = async (guild, roles) => {
+  // Promise.all takes an array of promises and returns a single promise that resolves
+  //when all the promises in the array have resolved.
+  const newRoles = await Promise.all(
+    roles.map(async (item) => {
+      let newRole = guild.roles.cache.find((role) => role.name === item);
+      if (!newRole) {
+        newRole = await guild.roles.create({
+          name: item,
+          color: 2067276,
+          permissions: [],
+        });
+      }
+      return newRole;
+    })
+  );
+  return newRoles;
 };
 
 // Preapproving if they are already present in the DB
 const preApproveUser = async (user) => {
-  const result = await User.findOne({ username: user.username });
-  if (!result) return null;
+  const res = await User.findOne({ username: user });
+  if (!res) return null;
+  const result = res.toObject();
   return {
     username: result.username,
     roles: result.roles,
@@ -61,10 +67,12 @@ const startBot = async () => {
     client.on("guildMemberAdd", async (member) => {
       const username = `${member.user.username}`;
       const verified = await preApproveUser(username);
+
       if (verified) {
-        const role = await roleCreation(member.guild);
-        await member.roles.add(role);
-        console.log(`Assigned 'MERN-2' role to ${username}`);
+        const role = await roleCreation(member.guild, verified.roles);
+        role.forEach(async (sprint) => {
+          await member.roles.add(sprint);
+        });
       }
     });
 
