@@ -21,6 +21,10 @@ mongoose
     startBot();
   })
   .catch((err) => console.error("Error occurred:", err));
+const colors = [5763719, 2123412, 2123412, 10038562, 16776960];
+const pickColor = () => {
+  return colors[Math.floor(Math.random() * colors.length)];
+};
 
 // Initially create a role and assign
 // As a follow-up, store roles in DB, fetch and assign them matching username
@@ -33,7 +37,7 @@ const roleCreation = async (guild, roles) => {
       if (!newRole) {
         newRole = await guild.roles.create({
           name: item,
-          color: 2067276,
+          color: pickColor(),
           permissions: [],
         });
       }
