@@ -21,6 +21,8 @@ mongoose
     startBot();
   })
   .catch((err) => console.error("Error occurred:", err));
+
+// Random Color proider function to the role being assigned
 const colors = [5763719, 2123412, 2123412, 10038562, 16776960];
 const pickColor = () => {
   return colors[Math.floor(Math.random() * colors.length)];
@@ -77,6 +79,13 @@ const startBot = async () => {
         role.forEach(async (sprint) => {
           await member.roles.add(sprint);
         });
+      } else {
+        try {
+          await member.kick("User not found in the database.");
+          console.log(`Kicked ${username} as they are not in the database.`);
+        } catch (error) {
+          console.error(`Failed to kick ${username}:`, error);
+        }
       }
     });
 
