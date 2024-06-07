@@ -1,3 +1,4 @@
 node_modules
 .env
-winston-doc.md
+db-feeder.ipynb
+criodo.csv
